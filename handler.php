@@ -1,7 +1,7 @@
 <?php
-require_once('../parser/formula/formula.php');
+require_once('formula/formula.php');
 
-Class ParserHandler extends Formula
+Class ParserHandler extends Jison\Formula
 {
 	public $spreadsheets = array();
 	public $spreadsheetsType = 'cell';
@@ -115,7 +115,7 @@ Class ParserHandler extends Formula
 						"cell"=> $cell,
 					);
 
-					$cell->value = $this->parse($cell->formula);
+					$cell->value = $this->parse($cell->formula)->text;
 				} catch(Exception $e) {
 					$cell->value = $e->getMessage();
 					$this->alertFormulaError($cell->value);
@@ -129,10 +129,11 @@ Class ParserHandler extends Formula
 		return $cell->value;
 	}
 
-	private function updateCellValueJson(&$cell, $sheet, $row, $col)
+	private function updateCellValueJson(&$cell = null, $sheet, $row, $col)
 	{
+        if ($cell == null) throw new Exception("Cell is undefined");
 		if (!empty($cell->state)) throw new Exception("Error: Loop Detected");
-		$cell->state = "red";
+        $cell->state = "red";
 
 		if (!isset($cell->calcLast)) $cell->calcLast = 0;
 
@@ -152,7 +153,7 @@ Class ParserHandler extends Formula
 						"cell"=> $cell,
 					);
 
-					$cell->value = $this->parse($cell->formula);
+					$cell->value = $this->parse($cell->formula)->text;
 				} catch(Exception $e) {
 					$cell->value = $e->getMessage();
 					$this->alertFormulaError($cell->value);
@@ -242,7 +243,8 @@ Class ParserHandler extends Formula
 		}
 
 		if (method_exists($this->formulas, $fn)) {
-			return $this->formulas->$fn($this->cell, $args);
+			$result = $this->formulas->$fn($this->cell, $args);
+            return $result;
 		} else {
 			return "Error: Function Not Found";
 		}
